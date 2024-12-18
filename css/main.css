@@ -1,0 +1,17 @@
+body {
+    background-color: rgb(51, 51, 51);
+}
+
+.cell {
+    width:  5vh;
+    height: 5vh;
+    margin: 3vh;
+}
+
+.cell.unopened {
+    background-color: lightslategray; 
+}
+
+.opened {
+    background-color: white;
+}

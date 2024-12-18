@@ -20,10 +20,16 @@ const gGame = {}
 const gBoard = []
 
 function onInit(elBtn) {
+    gGame.status = 'playing'
+
     // empty in case left from prev game
     while (gBoard.length > 0) {
         gBoard.pop()
     }
+
+    // remove potential game over screen
+    var elGameOver = document.querySelector('.game-over')
+    elGameOver.style.display = 'none'
 
     switch (elBtn.innerText) {
         case 'beginner': 
@@ -69,6 +75,8 @@ function buildBoard(rows, cols, mines) {
     gGame.mines = mines
     gGame.minesLoc = createMinesLocations()
     placeMines()
+
+    countMines()
 }
 
 function renderBoard() {
@@ -93,14 +101,58 @@ function renderBoard() {
 }
 
 function onCellClick(elCell) {
-    console.log('elCell:', elCell)
-    console.log('clicked on cell data:', elCell.dataset.location)
+    if (gGame.status === 'game over') return
+
     // cell-2-4
     var loc = elCell.dataset.location.split('-')
     loc = {i: loc[1], j: loc[2]}
-    console.log('loc:', loc)
     elCell.classList.remove('unopened')
-    elCell.classList.add('opend')
+    elCell.classList.add('opened')
+
+    gBoard[loc.i][loc.j].status = 'opened'
+
+    if (gBoard[loc.i][loc.j].content === MINE) {
+        gameOver('lose')
+    }
+    else {
+        if (checkWin()) gameOver('win')
+    }
+}
+
+function gameOver(state) {  // state = 'win' / 'lose'
+    gGame.status = 'game over'
+    var text
+    if (state === 'lose') {
+        text = 'Oh no! \nYou Lost'
+    }
+    else if (state === 'win') {
+        text = 'Hurray!\nYou Won'
+    }
+    var elGameOver = document.querySelector('.game-over')
+    elGameOver.innerText = text
+    elGameOver.style.display = 'block'
+}
+
+function checkWin() {
+    for (let i = 0; i < gGame.rows; i++) {
+        for (let j = 0; j < gGame.cols; j++) {
+            if (gBoard[i][j].status === 'unopened' && gBoard[i][j].content !== MINE) return false
+        }
+    }
+    return true
+}
+
+function countMines() {
+
+    for (let i = 0; i < gGame.rows; i++) {
+        for (let j = 0; j < gGame.cols; j++) {
+
+            if (gBoard[i][j].content !== MINE) {
+                var minesAround = countNegs({i: i, j: j})               
+                gBoard[i][j].content = minesAround
+            }
+        }
+    }
 }
 
 function placeMines() {
@@ -108,6 +160,20 @@ function placeMines() {
         let loc = gGame.minesLoc[i]
         gBoard[loc.i][loc.j].content = MINE
     }
+}
+
+function countNegs(loc) {
+    var mineCounter = 0
+    for (let i = loc.i - 1; i <= loc.i + 1; i++) {
+        if (i < 0 || i >= gGame.rows) continue
+        
+        for (let j = loc.j - 1; j <= loc.j + 1; j++) {
+            if (j < 0 || j >= gGame.cols) continue         
+            
+            if (gBoard[i][j].content === MINE) mineCounter++
+        }
+    }
+    return mineCounter
 }
 
 function createCell() {

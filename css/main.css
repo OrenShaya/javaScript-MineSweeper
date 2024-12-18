@@ -1,17 +1,55 @@
+:root {
+    --background-color: rgb(51, 51, 51);
+    --closed-cell-color:  lightslategray;
+}
+
 body {
-    background-color: rgb(51, 51, 51);
+    background-color: var(--background-color);
+    align-items: center;
+}
+
+h1 {
+    color: rgb(189, 97, 26);
+    text-align: center;
+}
+
+button {
+    margin: 1vh;
+    background-color: rgb(156, 220, 240);
+    box-shadow: rgb(97, 136, 148);
+}
+
+table {
+    margin: 2vh;
+    border-spacing: .8vh;
+    display: flex; 
+    justify-content: center
 }
 
 .cell {
     width:  5vh;
     height: 5vh;
+    
     margin: 3vh;
+    text-align: center;
 }
 
 .cell.unopened {
-    background-color: lightslategray; 
+    background-color: var(--closed-cell-color);
+    cursor: pointer;
 }
 
 .opened {
-    background-color: white;
+    background-color: var(--background-color);
+}
+
+.game-over {
+    font-size: 4vh;
+    color: rgb(189, 97, 26);
+    margin: 3vh;
+    text-align: center;
+}
+
+.buttons {
+    text-align: center;
 }

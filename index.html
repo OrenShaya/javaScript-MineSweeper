@@ -16,10 +16,19 @@
         <button class="start real-expert" onclick="onInit(this)">real expert</button>
     </div>
     
+    <div class="smiley">
+        <button class="smiley-button" onclick="onInit()">🙂</button>
+    </div>
+
     <div class="game-over"></div>
 
     <table class="game-info">
         <tr>
+
+            <td class="hints">
+                <span class="hints-text"></span>
+                <span class="hints-symbol" onclick="onHintClick()"></span>
+            </td>
             <td class="mines">
                 <span class="mines-counter-text"></span>
                 <span class="mines-counter-num"></span>

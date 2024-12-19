@@ -7,6 +7,7 @@
  *  mines - to count the mines
  *  minesLoc - an array with {i: i, j: j} of mine locations
  *  lifes - number of lifes
+ *  hints - number of hints
  * 
  * gBoard a 2D array with the board backend
  *  each cell has:
@@ -14,9 +15,8 @@
  *      content: MINE or CLEAR
  * 
  * stuff TODO:
- *  recursive safe opening
- *   
- *  add sound
+ *   safe click - shows a safe cell to click
+ *  add sound ?
  *  
  */
 
@@ -29,8 +29,17 @@ const gGame = {}
 const gBoard = []
 
 function onInit(elBtn) {
+    if (!elBtn) {
+        if (gGame.diffuclty) {
+            elBtn = document.querySelector(`.${gGame.diffuclty}`)
+        } else {
+            elBtn = document.querySelector('.intermidiate');
+        }
+    }
     gGame.status = 'playing'
     gGame.lifes = 3
+    gGame.hints = 3
+    gGame.isHintOn = false
     gGame.firstClick = true
 
     // empty in case left from prev game
@@ -41,30 +50,30 @@ function onInit(elBtn) {
     // remove potential game over screen
     var elGameOver = document.querySelector('.game-over')
     elGameOver.style.display = 'none'
-
-    switch (elBtn.innerText) {
+   
+    switch (elBtn.classList[1]) {
         case 'beginner': 
             console.log('Starting new game at beginner level')
+            gGame.diffuclty = 'beginner'
             buildBoard(4, 4, 2)
-            console.log(gBoard)
             renderBoard()
-            break 
+            break
         case 'intermidiate':
             console.log('Starting new game at intermidiate level')
+            gGame.diffuclty = 'intermidiate'
             buildBoard(8, 8, 14)
-            console.log(gBoard)
             renderBoard()
             break
         case 'expert': 
             console.log('Starting new game at expert level') 
+            gGame.diffuclty = 'expert'
             buildBoard(12, 12, 32)
-            console.log(gBoard)
             renderBoard()
             break
-        case 'real expert':
-            console.log('Starting new game at real expert level')   
+        case 'real-expert':
+            console.log('Starting new game at real expert level')
+            gGame.diffuclty = 'real-expert'
             buildBoard(16, 30, 99)
-            console.log(gBoard)
             renderBoard()         
             break
     }
@@ -75,7 +84,6 @@ function buildBoard(rows, cols, mines) {
     gGame.cols = cols
     gGame.mines = mines
 
-    console.log(`rows: ${rows}, cols: ${cols}, mines: ${mines}`)
     for (let i = 0; i < rows; i++) {
         var row = []
         for (let j = 0; j < cols; j++) {
@@ -110,6 +118,14 @@ function renderBoard() {
     // stops right click default function
     elContainer.addEventListener("contextmenu",function(e) {e.preventDefault()});
 
+    updateSmiley('🙂')
+
+    // hints
+    const elHints = document.querySelector('.hints-text')
+    elHints.innerText = 'Hints:'
+    const elHintsSymbol = document.querySelector('.hints-symbol')
+    elHintsSymbol.innerText = '💡💡💡'
+
     // add life
     const elLifeText = document.querySelector('.life-text')
     elLifeText.innerText = 'Lives: '
@@ -128,15 +144,22 @@ function onCellClick(elCell) {
     // cell-2-4
     var loc = elCell.dataset.location.split('-')
     loc = {i: +loc[1], j: +loc[2]}
-    elCell.classList.remove('unopened')
-    elCell.classList.add('opened')
-    
+    // first click
     if (gGame.firstClick) { 
         gGame.minesLoc = createMinesLocations(loc)
         placeMines()
         countMines()
         gGame.firstClick = false
     }
+    // hint
+    if (gGame.isHintOn) {
+        gGame.isHintOn = false
+        openNegsHint(loc)
+        return
+    }
+    
+    elCell.classList.remove('unopened')
+    elCell.classList.add('opened')
 
     showCell(loc)
 
@@ -145,6 +168,13 @@ function onCellClick(elCell) {
     if (gBoard[loc.i][loc.j].content === MINE) {
         gGame.lifes--
         updateLifes()
+        var elMineCounter = document.querySelector('.mines-counter-num')
+        elMineCounter.innerText = +elMineCounter.innerText - 1
+        
+        updateSmiley('😫')
+        setTimeout(updateSmiley, 1500, '🙂')
+
+
         if (gGame.lifes === 0) gameOver('lose')
     } else if (gBoard[loc.i][loc.j].content === 0) {
         openNegs(loc)
@@ -175,19 +205,56 @@ function onCellMarked(elCell) {
     elMineCounter.innerText = +elMineCounter.innerText + mineDiff
 }
 
+function onHintClick() {
+    if (gGame.status === 'game over') return
+    if (gGame.hints === 0) return
+
+    gGame.hints--
+    if (gGame.hints == 0) {
+        var elHintsText = document.querySelector('.hints-text')
+        elHintsText.innerText = ''
+    }
+    var elHintsSymbol = document.querySelector('.hints-symbol')
+    elHintsSymbol.innerText = ''
+    for (let i = 0; i < gGame.hints; i++) {
+        elHintsSymbol.innerText += '💡'
+    }
+    gGame.isHintOn = true
+    elHintsSymbol.style.backgroundColor = 'yellow'
+}
+
 function openNegs(loc) {
-    // console.log('origin:', loc.i, loc.j, gBoard[loc.i][loc.j].content)
     for (let i = loc.i - 1; i <= loc.i + 1; i++) {
         if (i < 0 || i >= gGame.rows) continue
         
         for (let j = loc.j - 1; j <= loc.j + 1; j++) {
-            if (j < 0 || j >= gGame.cols || (j == loc.j && i == loc.i)) continue         
-            // console.log('neighbours i, j: ', i, j, 'origin:', loc.i, loc.j)                
+            if (j < 0 || j >= gGame.cols || (j == loc.j && i == loc.i)) continue                    
             if (gBoard[i][j].status === 'unopened') {
                 onCellClick(document.querySelector(`[data-location="cell-${i}-${j}"]`))
             }
         }
     }
+}
+
+function openNegsHint(loc) {
+    var elHintsSymbol = document.querySelector('.hints-symbol')
+    elHintsSymbol.style.backgroundColor = ''
+
+    for (let i = loc.i - 1; i <= loc.i + 1; i++) {
+        if (i < 0 || i >= gGame.rows) continue
+        
+        for (let j = loc.j - 1; j <= loc.j + 1; j++) {
+            if (j < 0 || j >= gGame.cols) continue                    
+            let hintLoc = {i: i, j: j}
+            showCell(hintLoc)
+            setTimeout(hideCell, 1000, hintLoc)
+        }
+    }
+}
+
+function updateSmiley(smiley) {
+    var elSmiley = document.querySelector('.smiley-button')
+    elSmiley.innerText = smiley
 }
 
 function updateLifes() {
@@ -202,11 +269,14 @@ function gameOver(state) {  // state = 'win' / 'lose'
     revelAll()
     gGame.status = 'game over'
     var text
+    var smiley
     if (state === 'lose') {
         text = 'Oh no! \nYou Lost'
+        updateSmiley('😵')
     }
     else if (state === 'win') {
         text = 'Hurray!\nYou Won'
+        updateSmiley('😎')
     }
     var elGameOver = document.querySelector('.game-over')
     elGameOver.innerText = text
@@ -225,15 +295,11 @@ function checkWin() {
     return true
 }
 
-function revelAll(isDevMode = false) { 
+function revelAll() { 
     for (let i = 0; i < gBoard.length; i++) {
         for (let j = 0; j < gBoard[i].length; j++) {
-            const elCell = document.querySelector(`[data-location="cell-${i}-${j}"]`)
-            if (!isDevMode) {
-                elCell.classList.remove('unopened')
-                elCell.classList.add('opened')
-            }
-            showCell({i: i, j: j})
+            var loc = {i: i, j: j}
+            showCell(loc)
         }
     }
 }
@@ -245,6 +311,16 @@ function showCell(loc) { // NOTE: does not update status!
     }
     else {
         elCell.innerText = CLEAR
+    }
+}
+
+function hideCell(loc) { // NOTE: does not update status!
+    const elCell = document.querySelector(`[data-location="cell-${loc.i}-${loc.j}"]`)
+    if (gBoard[loc.i][loc.j].status === 'opened') return
+    if (gBoard[loc.i][loc.j].status === 'marked') {
+        elCell.innerText = FLAG
+    } else {
+        elCell.innerText = ''
     }
 }
 

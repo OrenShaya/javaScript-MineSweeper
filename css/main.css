@@ -1,6 +1,7 @@
 :root {
     --background-color: rgb(51, 51, 51);
     --closed-cell-color:  lightslategray;
+    --header-color: rgb(189, 97, 26);
 }
 
 body {
@@ -9,7 +10,7 @@ body {
 }
 
 h1 {
-    color: rgb(189, 97, 26);
+    color: var(--header-color);
     text-align: center;
 }
 
@@ -19,7 +20,27 @@ button {
     box-shadow: rgb(97, 136, 148);
 }
 
+.game-info {
+    color: wheat;
+    margin: 3vh;
+    text-align: center;
+
+    td {
+        padding-left: 5vh;
+    }
+    .mines-counter-text {
+        color: var(--header-color);
+    }
+    .mines-counter-num {
+        color: rgb(255, 253, 145);
+    }
+    .life-text {
+        color: rgb(178, 188, 255);
+    }
+}
+
 table {
+    color: wheat;
     margin: 2vh;
     border-spacing: .8vh;
     display: flex; 
